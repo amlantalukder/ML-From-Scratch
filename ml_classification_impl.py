@@ -1,7 +1,5 @@
 import math, pdb
 from mpl_toolkits import mplot3d
-import matplotlib.pyplot as plt
-import random
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB

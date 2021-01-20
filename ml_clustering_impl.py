@@ -1,4 +1,6 @@
+import random, pdb
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
@@ -15,49 +17,41 @@ class KMeansImp():
         self.tol = tol
         self.random_state = 0
 
-    def distance(self, x1, x2):
-        return np.sqrt(np.sum((x1 - x2) ** 2))
+    def distance(self, X1, X2):
+        return np.sqrt(np.sum((X1 - X2) ** 2, axis=1))
 
-    def distanceFromCentroids(self, x):
-        return [self.distance(x, c) for c in self.cluster_centroids]
-
-    def adjustCentroid(self, X):
-        X_c = []
-        for j in range(self.cluster_centroids.shape[0]):
-            temp = []
-            for i in range(self.labels.shape[0]):
-                if self.labels[i] == j:
-                    temp.append(X[i])
-            X_c.append(np.average(temp, axis=0))
-        return np.array(X_c)
+    def distanceFromCentroids(self, X):
+        return np.array([self.distance(X, c) for c in self.cluster_centroids])
 
     def getRandomCentroids(self, X):
         random_state = np.random.RandomState(self.random_state)
         seeds = random_state.permutation(X.shape[0])[:self.n_clusters]
         return X[seeds]
 
+    def adjustCentroid(self, X):
+        X_c = []
+        for i in range(self.cluster_centroids.shape[0]):
+            associated_points = [X[j] for j in range(self.labels.shape[0]) if self.labels[j] == i]
+            X_c.append(np.average(associated_points, axis=0))
+        return np.array(X_c)
+
     def fit(self, X):
         self.cluster_centroids = self.getRandomCentroids(X)
-
         for _ in range(self.max_iter):
-            self.labels = np.array([np.argmin(self.distanceFromCentroids(X[i])) for i in range(X.shape[0])])
-
+            self.labels = np.argmin(self.distanceFromCentroids(X), axis=0)
             new_centroids = self.adjustCentroid(X)
-
-            converged = True
-            for i in range(self.cluster_centroids.shape[0]):
-                if self.distance(self.cluster_centroids[i], new_centroids[i]) > self.tol:
-                    converged = False
-
-            if converged: break
-
+            dist_centroids = self.distance(self.cluster_centroids, new_centroids)
+            if np.all(dist_centroids < self.tol): break
+            self.cluster_centroids = new_centroids
+        
     def predict(self, X):
-        return [np.argmin(self.distanceFromCentroids(X[i])) for i in range(X.shape[0])]
+        return np.argmin(self.distanceFromCentroids(X), axis=0)
 
     def plot(X, labels, centroids):
         random.seed(0)
-        colors = color = ["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in
+        colors = ["#" + ''.join([random.choice('0123456789ABCDEF') for j in range(6)]) for i in
                           range(np.size(centroids))]
+        colors = ['#FF0000', '#0000FF']
         plt.figure()
         for i in range(X.shape[0]):
             plt.scatter(X[i, 0], X[i, 1], c=colors[labels[i]])
@@ -169,6 +163,13 @@ class EMGaussian:
 # ----------------------------------------
 dataset = load_breast_cancer()
 X, y = dataset.data, dataset.target
+# X = np.array(list(zip(random.choices(range(50), k=100) + \
+#     random.choices(range(30, 120), k=100) + \
+#     random.choices(range(100,150), k=100), \
+#     random.choices(range(50), k=100) + \
+#     random.choices(range(30, 120), k=100) + \
+#     random.choices(range(100,150), k=100))))
+# y = np.array([1]*100 + random.choices(range(2), k=100) + [0]*100)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
 # ----------------------------------------
@@ -177,19 +178,20 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 clf = KMeans(n_clusters=2, init='random', random_state=0)
 clf.fit(X_train)
 y_pred = clf.predict(X_test)
-print(clf.cluster_centers_[:, :2])
-KMeansImp.plot(X_test, clf.labels_, clf.cluster_centers_)
+print("Cluster centroids (sklearn): \n", clf.cluster_centers_)
+KMeansImp.plot(X_test, y_pred, clf.cluster_centers_)
 
 clf = KMeansImp(n_clusters=2, random_state=0)
 clf.fit(X_train)
 y_pred = clf.predict(X_test)
-print(clf.cluster_centroids[:, :2])
-KMeansImp.plot(X_test, clf.labels, clf.cluster_centroids)
-print('....')
+print("Cluster centroids: \n", clf.cluster_centroids)
+KMeansImp.plot(X_test, y_pred, clf.cluster_centroids)
 
+'''
 # ----------------------------------------
 # Expectation Maximization
 # ----------------------------------------
 X = np.concatenate((np.random.normal(1, 1, (100, 3)), np.random.normal(200, 5, (1000, 3))))
 clf = EMGaussian(n_clusters=2)
 clf.fit(X)
+'''
