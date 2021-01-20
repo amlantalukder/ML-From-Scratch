@@ -62,13 +62,13 @@ class KMeansImp():
 # ----------------------------------------
 class EMGaussian:
 
-    def __init__(self, n_clusters=2, steps=None, tol=0.1, random_state=0):
+    def __init__(self, n_clusters=2, steps=None, tol=1e-4, random_state=0):
         self.count = 0
         self.steps = None
-        self.records = None
+        self.distribution = None
         self.n_clusters = n_clusters
         self.tol = tol
-        self.random_state = random_state
+        self.random_state = np.random.RandomState(random_state)
 
     def checkConvergence(self, a, b):
         for i in range(len(a)):
@@ -77,50 +77,52 @@ class EMGaussian:
                     return False
         return True
 
-    def fit(self, X):
-        random_state = np.random.RandomState(self.random_state)
-        indices = random_state.permutation(X.shape[0])[:self.n_clusters]
+    # ----------------------------------------
+    # Initially, the means (mu) are randomly 
+    # picked from the input data points and 
+    # the standard deviations (sigma) are
+    # considered 1 
+    # ----------------------------------------
+    def initGuess(self, X):
+        indices = self.random_state.permutation(X.shape[0])[:self.n_clusters]
+        print(indices)
         mus = X[indices, :]
         sigmas = np.ones((self.n_clusters, X.shape[1]))
+        return mus, sigmas
 
-        info = []
-        print('Init')
-        for i in range(self.n_clusters):
-            print('mu: {}, sigma: {}'.format(mus[i], sigmas[i]))
-            info.append((mus[i], sigmas[i]))
-
-        self.records = [info]
+    def fit(self, X):
+        mus, sigmas = self.initGuess(X)
+        
+        self.distribution = [list(zip(mus, sigmas))]
         self.priors = np.full((self.n_clusters, X.shape[1]), 1/self.n_clusters)
         self.posteriors = np.full((self.n_clusters, X.shape[0], X.shape[1]), None)
 
         while (self.steps != None and self.count < self.steps) or \
-                len(self.records) < 2 or not self.checkConvergence(self.records[-2], self.records[-1]):
+            len(self.distribution) < 2 or \
+            not self.checkConvergence(self.distribution[-2], self.distribution[-1]):
+
             self.eStep(X)
             self.mStep(X)
             self.count += 1
-            print('Step {}:'.format(self.count))
-            for i in range(len(self.records[-1])):
-                print('mu: {}, sigma: {}'.format(self.records[-1][i][0], self.records[-1][i][1]))
 
         self.plot(X, num=6)
 
     def likelihood(self, X, mu, sigma):
-        try:
-            return np.exp((-(X-mu)**2/(2*sigma**2)).astype('float'))/np.sqrt((2*np.pi*sigma**2).astype('float'))
-        except:
-            pdb.set_trace()
-
+        return np.exp((-(X-mu)**2/(2*sigma**2)).astype('float')) \
+            / np.sqrt((2*np.pi*sigma**2).astype('float'))
+        
     def eStep(self, X):
         likelihoods = []
         posterior_denom = 0
         for i in range(self.n_clusters):
-            mu, sigma = self.records[-1][i]
+            mu, sigma = self.distribution[-1][i]
             l = self.likelihood(X, mu, sigma)
             likelihoods.append(l)
             posterior_denom += l*self.priors[i]
 
         for i in range(self.n_clusters):
-            self.posteriors[i] = np.divide(likelihoods[i]*self.priors[i], posterior_denom, out=np.zeros_like(likelihoods[i]), where=(likelihoods[i]!=0))
+            self.posteriors[i] = np.divide(likelihoods[i]*self.priors[i], posterior_denom, \
+                out=np.zeros_like(likelihoods[i]), where=(likelihoods[i]!=0))
 
     def mStep(self, X):
         info = []
@@ -130,13 +132,13 @@ class EMGaussian:
             sigma = np.average((X-mu)**2, weights=self.posteriors[i], axis=0)
 
             info.append((mu, sigma))
-        self.records.append(info)
+        self.distribution.append(info)
 
     def plot(self, X, num=6):
-        if len(self.records) <= 6:
-            indices = range(0, len(self.records))
+        if len(self.distribution) <= 6:
+            indices = range(0, len(self.distribution))
         else:
-            indices = [0] + sorted(np.random.choice(len(self.records)-2, size=4, replace=False)+1) + [len(self.records)-1]
+            indices = [0] + sorted(np.random.choice(len(self.distribution)-2, size=4, replace=False)+1) + [len(self.distribution)-1]
 
         fig, axes = plt.subplots(ncols=3, nrows=len(indices)//3+1*int(len(indices)%3!=0))
         for i in range(len(indices)):
@@ -147,7 +149,7 @@ class EMGaussian:
                     ax = axes[i//3, i%3]
                 except:
                     pdb.set_trace()
-            info = self.records[indices[i]]
+            info = self.distribution[indices[i]]
             for j in range(len(info)):
                 mu, sigma = info[j]
                 x = np.linspace(mu[0] - 3 * sigma[0], mu[0] + 3 * sigma[0], 100)
@@ -163,15 +165,8 @@ class EMGaussian:
 # ----------------------------------------
 dataset = load_breast_cancer()
 X, y = dataset.data, dataset.target
-# X = np.array(list(zip(random.choices(range(50), k=100) + \
-#     random.choices(range(30, 120), k=100) + \
-#     random.choices(range(100,150), k=100), \
-#     random.choices(range(50), k=100) + \
-#     random.choices(range(30, 120), k=100) + \
-#     random.choices(range(100,150), k=100))))
-# y = np.array([1]*100 + random.choices(range(2), k=100) + [0]*100)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
+'''
 # ----------------------------------------
 # Kmeans
 # ----------------------------------------
@@ -186,12 +181,14 @@ clf.fit(X_train)
 y_pred = clf.predict(X_test)
 print("Cluster centroids: \n", clf.cluster_centroids)
 KMeansImp.plot(X_test, y_pred, clf.cluster_centroids)
-
 '''
 # ----------------------------------------
 # Expectation Maximization
 # ----------------------------------------
 X = np.concatenate((np.random.normal(1, 1, (100, 3)), np.random.normal(200, 5, (1000, 3))))
 clf = EMGaussian(n_clusters=2)
-clf.fit(X)
-'''
+# Since EM starts with initial guesses
+# it is best to run it multiple times
+# to find the best solution
+for i in range(10):
+    clf.fit(X)
