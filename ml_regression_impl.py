@@ -79,24 +79,18 @@ class LinearRegressionGDImp(Regression):
     def predict(self, X):
         return np.round(self.h(X))
 
-def plotLinearRegression(X, y, M, c):
+def plotLinearRegression(X, y, M, c, title=""):
     plt.figure()
     plt.scatter(X[:, 0], y)
     plt.plot(X[:, 0], X[:, 0] * M[0] + c, c='r')
+    plt.title(title)
     plt.show()
 
 # ----------------------------------------
 # Load dataset
 # ----------------------------------------
 X, y = make_regression(n_samples=1000, n_features=1, n_informative=1, noise=15)
-
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
-#X = np.array([[1, 1, 1], [3, 3, 3], [5, 5, 5], [7, 7, 7], [9, 9, 9]])
-#y = np.array([20, 52, 45, 85, 80])
-
-#X = np.array([[2], [3], [5], [13], [8], [16], [11], [1], [9]])
-#y = np.array([15, 28, 42, 64, 50, 90, 58, 8, 54])
 
 # ----------------------------------------
 # Linear Regression
@@ -105,16 +99,16 @@ clf = LinearRegression()
 clf.fit(X_train, y_train)
 print('Test set score (sklearn) : {:.2f}'.format(clf.score(X_test, y_test)))
 print(clf.coef_, clf.intercept_)
-plotLinearRegression(X, y, clf.coef_, clf.intercept_)
+plotLinearRegression(X, y, clf.coef_, clf.intercept_, "Linear Regression (sklearn)")
 
 clf = LinearRegressionLSImp()
 clf.fit(X_train, y_train)
 print('Test set score (LS) : {:.2f}'.format(clf.score(X_test, y_test)))
 print(clf.M, clf.c)
-plotLinearRegression(X, y, clf.M, clf.c)
+plotLinearRegression(X, y, clf.M, clf.c, "Linear Regression (LS)")
 
 clf = LinearRegressionGDImp(learning_rate=1, max_iter=50000, tol=1e-2)
 clf.fit(X_train, y_train)
 print('Test set score (GD) : {:.2f}'.format(clf.score(X_test, y_test)))
 print(clf.M, clf.c)
-plotLinearRegression(X, y, clf.M, clf.c)
+plotLinearRegression(X, y, clf.M, clf.c, "Linear Regression (GD)")
