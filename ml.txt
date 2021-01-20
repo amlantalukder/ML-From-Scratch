@@ -1,0 +1,40 @@
+What’s the trade-off between bias and variance?
+What is the difference between supervised and unsupervised machine learning?
+How is KNN different from k-means clustering?
+Explain how a ROC curve works.
+Define precision and recall.
+What is Bayes’ Theorem? How is it useful in a machine learning context?
+Why is “Naive” Bayes naive?
+Explain the difference between L1 and L2 regularization.
+What’s your favorite algorithm, and can you explain it to me in less than a minute?
+What’s the difference between Type I and Type II error?
+What’s a Fourier transform?
+What is deep learning, and how does it contrast with other machine learning algorithms?
+What’s the difference between a generative and discriminative model?
+What cross-validation technique would you use on a time series dataset?
+How is a decision tree pruned?
+Which is more important to you– model accuracy, or model performance?
+What’s the F1 score? How would you use it?
+How would you handle an imbalanced dataset?
+When should you use classification over regression?
+Name an example where ensemble techniques might be useful.
+How do you ensure you’re not overfitting with a model?
+What evaluation approaches would you work to gauge the effectiveness of a machine learning model?
+How would you evaluate a logistic regression model?
+What’s the “kernel trick” and how is it useful?
+How do you handle missing or corrupted data in a dataset?
+Do you have experience with Spark or big data tools for machine learning?
+Pick an algorithm. Write the psuedo-code for a parallel implementation.
+What are some differences between a linked list and an array?
+Describe a hash table.
+Which data visualization libraries do you use? What are your thoughts on the best data visualization tools?
+How would you implement a recommendation system for our company’s users?
+How can we use your machine learning skills to generate revenue?
+What do you think of our current data process?
+What are the last machine learning papers you’ve read?
+Do you have research experience in machine learning?
+What are your favorite use cases of machine learning models?
+How would you approach the “Netflix Prize” competition?
+Where do you usually source datasets?
+How do you think Google is training data for self-driving cars?
+How would you simulate the approach AlphaGo took to beat Lee Sidol at Go?
