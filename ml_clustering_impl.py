@@ -4,6 +4,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 import scipy.stats as stats
 
+# ----------------------------------------
 class KMeansImp():
 
     def __init__(self, n_clusters=2, max_iter=300, tol=1e-4, random_state=0):
@@ -64,6 +65,7 @@ class KMeansImp():
             plt.scatter(centroids[i, 0], centroids[i, 1], marker='+', c=colors[i])
         plt.show()
 
+# ----------------------------------------
 class EMGaussian:
 
     def __init__(self, n_clusters=2, steps=None, tol=0.1, random_state=0):

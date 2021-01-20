@@ -22,38 +22,38 @@ class DecisionTreeClassifierImp():
     def fit(self, X, y):
         self.n, self.m = X.shape
         self.classes = np.unique(y)
-        self.build_tree(X, y)
+        self.buildTree(X, y)
         self.feature_importances_ = np.zeros(self.m)
-        self.calculate_feature_importances(self.tree)
+        self.calculateFeatureImportances(self.tree)
         self.feature_importances_ /= np.sum(self.feature_importances_)
 
     def predict(self, X):
-        return [self.predict_row(x, self.tree) for x in X]
+        return [self.predictRow(x, self.tree) for x in X]
 
     def isLeaf(self, node):
         return not isinstance(node, dict)
 
-    def predict_row(self, x, node):
+    def predictRow(self, x, node):
         if self.isLeaf(node):
             return node
 
         if x[node['index']] < node['value']:
-            return self.predict_row(x, node['left'])
+            return self.predictRow(x, node['left'])
 
-        return self.predict_row(x, node['right'])
+        return self.predictRow(x, node['right'])
 
-    def build_tree(self, X, y):
+    def buildTree(self, X, y):
         data = np.concatenate((X, np.expand_dims(y, axis=1)), axis=1)
-        root = self.get_root(data)
+        root = self.getRoot(data)
         self.tree = self.fork(root)
 
-    def get_root(self, data):
+    def getRoot(self, data):
         root, max_info_gain = None, None
-        parent_gini = self.gini_index(data)
+        parent_gini = self.giniIndex(data)
         for index in range(data.shape[1]-1):
             for row in data:
                 left, right = self.split(data, index, row[index])
-                info_gain = self.info_gain([left, right], parent_gini)
+                info_gain = self.infoGain([left, right], parent_gini)
                 if max_info_gain == None or max_info_gain < info_gain:
                     max_info_gain = info_gain
                     root = {'index':index, 'value':row[index], 'left':left, 'right':right, 'info_gain':info_gain}
@@ -62,7 +62,7 @@ class DecisionTreeClassifierImp():
     def split(self, data, index, val):
         return data[data[:, index]<val], data[data[:, index]>=val]
 
-    def leaf_node(self, data):
+    def createLeafNode(self, data):
         if len(data) == 0:
             return 0
         classes, freq = np.unique(data[:, -1], return_counts=True)
@@ -71,20 +71,20 @@ class DecisionTreeClassifierImp():
     def fork(self, node, depth=1):
         left, right = node['left'], node['right']
         if len(left) == 0 or len(right) == 0:
-            node['left'] = node['right'] = self.leaf_node(np.concatenate((node['left'], node['right']), axis=0))
+            node['left'] = node['right'] = self.createLeafNode(np.concatenate((node['left'], node['right']), axis=0))
             return node
         if depth > self.max_depth:
-            node['left'], node['right'] = self.leaf_node(node['left']), self.leaf_node(node['right'])
+            node['left'], node['right'] = self.createLeafNode(node['left']), self.createLeafNode(node['right'])
             return node
 
-        root = self.get_root(node['left'])
+        root = self.getRoot(node['left'])
         node['left'] = self.fork(root, depth + 1)
-        root = self.get_root(node['right'])
+        root = self.getRoot(node['right'])
         node['right'] = self.fork(root, depth + 1)
 
         return node
 
-    def gini_index(self, group):
+    def giniIndex(self, group):
         gini = 1
         l = len(group)
         if l > 0:
@@ -94,21 +94,21 @@ class DecisionTreeClassifierImp():
                 gini -= p*p
         return gini
 
-    def info_gain(self, child_groups, parent_gini):
+    def infoGain(self, child_groups, parent_gini):
 
         total_rows = sum([len(g) for g in child_groups])
 
         child_gini = 0
         for g in child_groups:
-            child_gini += self.gini_index(g)*(len(g)/total_rows)
+            child_gini += self.giniIndex(g)*(len(g)/total_rows)
 
         return parent_gini-child_gini
 
-    def calculate_feature_importances(self, node):
+    def calculateFeatureImportances(self, node):
         if self.isLeaf(node): return
         self.feature_importances_[node['index']] += node['info_gain']
-        self.calculate_feature_importances(node['left'])
-        self.calculate_feature_importances(node['right'])
+        self.calculateFeatureImportances(node['left'])
+        self.calculateFeatureImportances(node['right'])
 
 # ----------------------------------------
 class GaussianNBImp():
