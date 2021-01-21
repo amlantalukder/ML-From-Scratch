@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np, pdb
 from matplotlib import pyplot as plt
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -29,12 +29,19 @@ class LinearRegressionLSImp(Regression):
     def h(self, X):
         return (X @ self.M) + self.c
 
+    # ----------------------------------------
+    # d(loss)/d(c) = y_mean - M X_mean
+    # d(loss)/d(M) = sum(X(y-y_mean))/sum(X(X-X_mean))
+    # d(loss)/d(M) can be rewritten as,
+    #   sum((X-X_mean)(y-y_mean))/sum((X-X_mean)^2)
+    # ----------------------------------------
     def fit(self, X, y):
         X_mean = X.mean(axis=0)
         y_mean = y.mean()
+        #self.M = X.T @ (y-y_mean) / np.sum(X*(X-X_mean)).T
         self.M = ((X-X_mean).T @ (y-y_mean)) / np.sum((X-X_mean)**2)
         self.c = y_mean - (X_mean @ self.M)
-
+    
     def predict(self, X):
         return self.h(X)
 
@@ -61,20 +68,15 @@ class LinearRegressionGDImp(Regression):
         self.n, self.m = X.shape
         self.M, self.c = np.zeros(self.m), 0
 
-        counter = 0
-        while counter < self.max_iter:
+        for counter in range(self.max_iter):
             y_pred = self.h(X)
             diff_M, diff_c = self.gradient(X, y, y_pred)
 
-            error = self.loss(y, y_pred)
-            #print(error)
-            if error <= self.tol:
-                break
-
+            error = self.loss(y, y_pred)            
+            if error <= self.tol: break
+            if counter < 100: print(self.M, self.c)
             self.M -= self.learning_rate * diff_M
             self.c -= self.learning_rate * diff_c
-
-            counter += 1
 
     def predict(self, X):
         return np.round(self.h(X))
@@ -89,9 +91,9 @@ def plotLinearRegression(X, y, M, c, title=""):
 # ----------------------------------------
 # Load dataset
 # ----------------------------------------
-X, y = make_regression(n_samples=1000, n_features=1, n_informative=1, noise=15)
+X, y = make_regression(n_samples=1000, n_features=1, n_informative=1, noise=15, random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-
+'''
 # ----------------------------------------
 # Linear Regression
 # ----------------------------------------
@@ -106,7 +108,7 @@ clf.fit(X_train, y_train)
 print('Test set score (LS) : {:.2f}'.format(clf.score(X_test, y_test)))
 print(clf.M, clf.c)
 plotLinearRegression(X, y, clf.M, clf.c, "Linear Regression (LS)")
-
+'''
 clf = LinearRegressionGDImp(learning_rate=1, max_iter=50000, tol=1e-2)
 clf.fit(X_train, y_train)
 print('Test set score (GD) : {:.2f}'.format(clf.score(X_test, y_test)))
