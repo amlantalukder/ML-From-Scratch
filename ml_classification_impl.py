@@ -194,7 +194,7 @@ class LogisticRegressionImp():
         #   loss = -log(y_pred) if y = 1 
         #   loss = -log(1-y_pred) if y = 0
         # In short,
-        #   loss = -y log(y_pred) - (1-y) log(1-y_pred)
+        #   loss = np.mean(-y log(y_pred) - (1-y) log(1-y_pred))
         # ----------------------------------------
         epsilon = 1e-06
         return np.mean(-y @ np.log(y_pred + epsilon) - (1 - y) @ np.log(1 - y_pred + epsilon))
@@ -224,13 +224,14 @@ class LogisticRegressionImp():
     def fit(self, X, y):
         self.n, self.m = X.shape
         self.M, self.c = np.zeros(self.m), 0
-
+        loss_prev = None
         for counter in range(self.max_iter):
             y_pred = self.h(X)
             dM, dc = self.gradient(X, y, y_pred)
 
-            error = self.loss(y, y_pred)
-            if error <= self.tol: break
+            loss = self.loss(y, y_pred)
+            if loss_prev and abs(loss_prev-loss) <= self.tol: break
+            loss_prev = loss
 
             self.M -= self.learning_rate * dM
             self.c -= self.learning_rate * dc

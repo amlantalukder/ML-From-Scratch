@@ -48,7 +48,7 @@ class LinearRegressionLSImp(Regression):
 # ----------------------------------------
 class LinearRegressionGDImp(Regression):
 
-    def __init__(self, learning_rate=1, max_iter=100, tol=1e-3):
+    def __init__(self, learning_rate=1, max_iter=100, tol=1e-4):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.tol = tol
@@ -67,17 +67,18 @@ class LinearRegressionGDImp(Regression):
     def fit(self, X, y):
         self.n, self.m = X.shape
         self.M, self.c = np.zeros(self.m), 0
-
+        loss_prev = None
         for counter in range(self.max_iter):
             y_pred = self.h(X)
             diff_M, diff_c = self.gradient(X, y, y_pred)
 
-            error = self.loss(y, y_pred)            
-            if error <= self.tol: break
+            loss = self.loss(y, y_pred)
+            if loss_prev and abs(loss_prev-loss) <= self.tol: break
+            loss_prev = loss
 
             self.M -= self.learning_rate * diff_M
             self.c -= self.learning_rate * diff_c
-
+                
     def predict(self, X):
         return np.round(self.h(X))
 
