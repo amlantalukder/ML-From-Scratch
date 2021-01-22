@@ -183,20 +183,30 @@ class LogisticRegressionImp():
 
     def loss(self, y, y_pred):
         # ----------------------------------------
-        # The regular least squared error function,
-        # np.mean((y - y_pred) ** 2)
-        # is not used as it is not a convex function
+        # Due to the use of the logistic function
+        # to compute y_pred, the regular least 
+        # squared error function,
+        # 0.5 * np.mean((y - y_pred) ** 2)
+        # becomes a non-convex function and has 
+        # multiple local optima. So instead of 
+        # this, the following convex function 
+        # was used that serves the same purpose.
+        #   loss = -log(y_pred) if y = 1 
+        #   loss = -log(1-y_pred) if y = 0
+        # In short,
+        #   loss = -y log(y_pred) - (1-y) log(1-y_pred)
         # ----------------------------------------
         epsilon = 1e-06
         return np.mean(-y @ np.log(y_pred + epsilon) - (1 - y) @ np.log(1 - y_pred + epsilon))
 
     def gradient(self, X, y, y_pred):
         # ----------------------------------------
-        # Since, z = MX + c and y_pred = sig(z)
+        # Since, loss = f(y_pred), y_pred = sig(z)
+        # and z = MX + c,
         # d(loss)/dM = d(loss)/d(sig(z)) * d(sig(z))/dz * dz/dM
         # d(loss)/d(sig(z)) = -y/y_pred + (1-y)/(1-y_pred)
         #                   = (-y+y_pred)/(y_pred(1-y_pred))
-        # d(sig(z))/dz      = d(y_pred)/dz = y_pred(1-y_pred)
+        # d(sig(z))/dz      = y_pred(1-y_pred)
         # dz/dM             = X
         # So, d(loss)/dM = (y_pred-y)X
         # ----------------------------------------
@@ -215,20 +225,15 @@ class LogisticRegressionImp():
         self.n, self.m = X.shape
         self.M, self.c = np.zeros(self.m), 0
 
-        counter = 0
-        while counter < self.max_iter:
+        for counter in range(self.max_iter):
             y_pred = self.h(X)
             dM, dc = self.gradient(X, y, y_pred)
 
             error = self.loss(y, y_pred)
-            #print(error)
-            if error <= self.tol:
-                break
+            if error <= self.tol: break
 
             self.M -= self.learning_rate * dM
             self.c -= self.learning_rate * dc
-
-            counter += 1
 
     def predict(self, X):
         return np.round(self.h(X))

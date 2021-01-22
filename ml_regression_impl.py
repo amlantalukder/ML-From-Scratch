@@ -54,7 +54,7 @@ class LinearRegressionGDImp(Regression):
         self.tol = tol
 
     def loss(self, y, y_pred):
-        return np.mean((y - y_pred) ** 2)
+        return 0.5 * np.mean((y - y_pred) ** 2)
 
     def gradient(self, X, y, y_pred):
         dM = (X.T @ (y_pred - y)) / self.n
@@ -74,7 +74,7 @@ class LinearRegressionGDImp(Regression):
 
             error = self.loss(y, y_pred)            
             if error <= self.tol: break
-            if counter < 100: print(self.M, self.c)
+
             self.M -= self.learning_rate * diff_M
             self.c -= self.learning_rate * diff_c
 
