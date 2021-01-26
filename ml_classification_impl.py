@@ -176,7 +176,7 @@ class KNeighborsClassifierImp():
 # ----------------------------------------
 class LogisticRegressionImp():
 
-    def __init__(self, learning_rate=1, max_iter=100, tol=1e-4):
+    def __init__(self, learning_rate=1, max_iter=200, tol=1e-4):
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.tol = tol
@@ -203,10 +203,10 @@ class LogisticRegressionImp():
         # ----------------------------------------
         # Since, loss = f(y_pred), y_pred = sig(z)
         # and z = MX + c,
-        # d(loss)/dM = d(loss)/d(sig(z)) * d(sig(z))/dz * dz/dM
-        # d(loss)/d(sig(z)) = -y/y_pred + (1-y)/(1-y_pred)
-        #                   = (-y+y_pred)/(y_pred(1-y_pred))
-        # d(sig(z))/dz      = y_pred(1-y_pred)
+        # d(loss)/dM = d(loss)/d(y_pred) * d(y_pred)/dz * dz/dM
+        # d(loss)/d(y_pred) = -y/y_pred + (1-y)/(1-y_pred)
+        #                   = (y_pred-y)/(y_pred(1-y_pred))
+        # d(y_pred)/dz      = y_pred(1-y_pred)
         # dz/dM             = X
         # So, d(loss)/dM = (y_pred-y)X
         # ----------------------------------------
@@ -214,8 +214,8 @@ class LogisticRegressionImp():
         dc = np.mean(y_pred-y)
         return dM, dc
 
-    def sigmoid(self, y):
-        return 1 / (1 + np.exp(-y))
+    def sigmoid(self, z):
+        return 1 / (1 + np.exp(-z))
 
     def h(self, X):
         z = (X @ self.M.T) + self.c
@@ -232,9 +232,10 @@ class LogisticRegressionImp():
             loss = self.loss(y, y_pred)
             if loss_prev and abs(loss_prev-loss) <= self.tol: break
             loss_prev = loss
-
+        
             self.M -= self.learning_rate * dM
             self.c -= self.learning_rate * dc
+        print(counter)
 
     def predict(self, X):
         return np.round(self.h(X))
