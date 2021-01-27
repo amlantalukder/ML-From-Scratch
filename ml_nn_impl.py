@@ -15,15 +15,7 @@ class Layer():
     def compile(self, input_dim, learning_rate):
         self.learning_rate = learning_rate
         self.M, self.c = np.zeros((input_dim, self.num_units)), np.zeros(self.num_units)
-        #self.M = np.random.rand(input_dim, self.num_units)
-        #self.c = np.random.rand(self.num_units)
-
-    def gradient(self, dloss_dz):
-        dz_dM, dz_dc = self.X, 1
-        dloss_dM = (dz_dM.T @ dloss_dz) / self.X.shape[0]
-        dloss_dc = np.mean(dz_dc * dloss_dz, axis=0)
-        return dloss_dM, dloss_dc
-
+        
     def sigmoid(self, z):
         return 1 / (1 + np.exp(-z))
 
@@ -36,22 +28,17 @@ class Layer():
         self.y_pred = self.h(X)
         return self.y_pred
 
-    def backward(self, dloss_dy=[], dloss_dz=[]):
-        if dloss_dy != []:
-            dy_dz = self.y_pred * (1 - self.y_pred)
-            dloss_dz = dy_dz * dloss_dy
-
-        dM, dc = self.gradient(dloss_dz)
+    def backward(self, dloss_dy):
+        dy_dz = self.y_pred * (1 - self.y_pred)
+        dloss_dz = dy_dz * dloss_dy
+    
+        dz_dM, dz_dc, dz_dX = self.X, 1, self.M
+        dloss_dM = (dz_dM.T @ dloss_dz) / self.X.shape[1]
+        dloss_dc = np.mean(dz_dc * dloss_dz, axis=0)
+        dloss_dX = (dloss_dz @ dz_dX.T) / self.X.shape[0]
         
-        dz_dX = self.M
-        dloss_dX = (dloss_dz) @ dz_dX.T
-        #print('X:', self.X[0])
-        #print('y_pred:', self.y_pred[:10])
-        #print('M:', self.M[:10])
-        #print('c:', self.c)
-        #print('\n')
-        self.M -= self.learning_rate * dM
-        self.c -= self.learning_rate * dc
+        self.M -= self.learning_rate * dloss_dM
+        self.c -= self.learning_rate * dloss_dc
         
         return dloss_dX
 
@@ -74,10 +61,8 @@ class NeuralNet():
         return X
 
     def backward(self, delta):
-        num_layers = len(self.layers)
-        delta = self.layers[num_layers-1].backward(dloss_dz = delta)
-        for i in range(num_layers-2, -1, -1):
-            delta = self.layers[i].backward(dloss_dy = delta)
+        for layer in self.layers[::-1]:
+            delta = layer.backward(delta)
 
     def getLoss(self, y, y_pred):
         if self.loss == 'mean_squared_error':
@@ -157,8 +142,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 # Neural network
 # ----------------------------------------
 model = Sequential()
-model.add(Dense(60, input_dim=X_train.shape[1], activation='sigmoid'))
-model.add(Dense(30, activation='sigmoid'))
+model.add(Dense(50, input_dim=X_train.shape[1], activation='sigmoid'))
+model.add(Dense(25, activation='sigmoid'))
 model.add(Dense(1, activation='sigmoid'))
 
 model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
@@ -166,17 +151,17 @@ history = model.fit(X_train, y_train, epochs=100, batch_size=100)
 _, accuracy = model.evaluate(X_test, y_test)
 print('Test set accuracy (keras) : {:.2f}'.format(accuracy))
 
-#plotPerformance(history.history)
+plotPerformance(history.history)
 
 model = NeuralNet()
 model.add(Layer(1, input_dim=X_train.shape[1]))
-#model.add(Layer(60, input_dim=X_train.shape[1]))
-#model.add(Layer(30))
+#model.add(Layer(50, input_dim=X_train.shape[1]))
+#model.add(Layer(25))
 #model.add(Layer(1))
 
 model.compile(learning_rate=0.00001, verbose=0)
-history = model.fit(X_train, y_train, epochs=2000, batch_size=len(X_train))
+history = model.fit(X_train, y_train, epochs=2000, batch_size=100)
 y_pred = model.predict(X_test)
 print('Test set accuracy : {}, {:.2f}'.format(np.count_nonzero(y_test == y_pred), np.mean(y_test == y_pred)))
 
-#plotPerformance(history)
+plotPerformance(history)
